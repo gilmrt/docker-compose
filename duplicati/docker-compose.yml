@@ -1,0 +1,19 @@
+version: "2.1"
+services:
+  duplicati:
+    image: duplicati/duplicati:latest
+    container_name: duplicati
+    command:
+      - duplicati-server
+      - --webservice-interface=any
+      - --webservice-allowed-hostnames=*
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - /docker/duplicati/data:/data
+      - /docker:/source/docker
+    ports:
+      - 8200:8200
+    restart: unless-stopped
