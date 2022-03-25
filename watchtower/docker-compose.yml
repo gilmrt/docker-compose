@@ -1,0 +1,26 @@
+# Add labels in docker-compose.yml you want to update
+# labels:
+#   com.centurylinklabs.watchtower.enable: true
+#   com.centurylinklabs.watchtower.monitor-only: true
+version: '3.1'
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    environment:
+      - TZ=Europe/Paris
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=21600
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_NOTIFICATIONS=email
+      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=<USERNAME>@gmail.com
+      - WATCHTOWER_NOTIFICATION_EMAIL_TO=<USERNAME>@gmail.com
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=smtp.gmail.com
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=587
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=<USERNAME>@gmail.com
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=<APP-PASSWORD>
+      - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
