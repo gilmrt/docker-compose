@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: homeassistant/home-assistant:stable
+    environment:
+      #- DISABLE_JEMALLOC=true
+      - TZ=Europe/Paris
+    volumes:
+      - /docker/homeassistant/config:/config
+      #- /etc/localtime:/etc/localtime:ro
+    #devices:
+    #  - /dev/ttyUSB0:/dev/ttyUSB0
+    ports:
+      - 8123:8123
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
