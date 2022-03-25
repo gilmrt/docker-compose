@@ -1,0 +1,14 @@
+version: "2.1"
+services:
+  node-red:
+    image: nodered/node-red:latest
+    container_name: nodered
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    ports:
+      - 1880:1880
+    volumes:
+      - /docker/node-red/data:/data
+    restart: unless-stopped
