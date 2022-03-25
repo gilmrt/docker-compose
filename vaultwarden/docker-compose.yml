@@ -1,0 +1,51 @@
+# Necessite un reverse-proxy avec SSL
+version: "2.4"
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - INVITATION_ORG_NAME=Vaultwarden [Maison]   # Permet de spécifier un nom d'application pour les invitations d'organisation
+      - LOG_FILE=/data/vaultwarden.log
+      - LOG_LEVEL=warn
+      - EXTENDED_LOGGING=true
+      - SHOW_PASSWORD_HINT=false
+      - SIGNUPS_ALLOWED=true
+      - WEBSOCKET_ENABLED=true
+      #- WEBSOCKET_PORT=3012    # Par défaut = 3012
+      - ICON_BLACKLIST_NON_GLOBAL_IPS=false
+      - ICON_CACHE_FOLDER=data/icon_cache
+      - ATTACHMENTS_FOLDER=data/attachments
+      - SENDS_FOLDER=data/sends
+    volumes:
+      - /docker/vaultwarden/data:/data
+    ports:
+      - 3012:3012   # Choisir un port libre pour le websocket
+      - 8880:80     # Choisir un port libre pour l'interface WEB
+    restart: unless-stopped
+
+  vaultwarden_backup:
+    image: ttionya/vaultwarden-backup:latest
+    container_name: vaultwarden-backup
+    restart: always
+    depends_on:
+      vaultwarden:
+        condition: service_healthy
+    volumes:
+      - /docker/vaultwarden/data:/data
+      - /docker/vaultwarden/backup/config:/config
+      - /docker/vaultwarden/backup/rclone_backup:/rclone_backup
+    environment:
+      - DATA_DIR=/data                    # Dossier de données de Vaultwarden monté avec les volumes
+      - RCLONE_REMOTE_NAME=local_backup   # Nom de la config rclone utilisée (voir note plus bas)
+      - RCLONE_REMOTE_DIR=/rclone_backup/ # Dossier qui doit monté avec les volumes
+      - CRON=0 22 * * *
+      - ZIP_ENABLE=TRUE
+      - ZIP_PASSWORD=CHANGEME   # Password to be changed
+      - ZIP_TYPE=7z
+      - BACKUP_FILE_DATE_SUFFIX=--%Hh%Mm%Ss
+      - BACKUP_KEEP_DAYS=7
+      - TIMEZONE=Europe/Paris
