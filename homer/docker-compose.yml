@@ -1,0 +1,13 @@
+version: "2"
+services:
+  homer:
+    image: b4bz/homer
+    container_name: homer
+    volumes:
+      - /docker/homer/conf/:/www/assets
+    ports:
+      - 4445:8080
+    environment:
+      - UID=1000
+      - GID=1000
+    restart: unless-stopped
