@@ -9,10 +9,157 @@ services:
     volumes:
       - /docker/homeassistant/config:/config
       #- /etc/localtime:/etc/localtime:ro
-    #devices:
-    #  - /dev/ttyUSB0:/dev/ttyUSB0
-    ports:
-      - 8123:8123
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
+    #ports:
+    #  - 8123:8123
     restart: unless-stopped
     privileged: true
     network_mode: host
+    depends_on:
+      - zwavejs2mqtt
+      - zigbee2mqtt
+      - mosquitto
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /docker/mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - /docker/mosquitto/log:/mosquitto/log
+      - /docker/mosquitto/data:/mosquitto/data
+    ports:
+      - 1883:1883
+      - 9001:9001
+    restart: unless-stopped
+
+  node-red:
+    image: nodered/node-red:latest
+    container_name: nodered
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    ports:
+      - 1880:1880
+    volumes:
+      - /docker/node-red/data:/data
+    restart: unless-stopped
+
+  zwavejs2mqtt:
+    container_name: zwavejs2mqtt
+    image: zwavejs/zwavejs2mqtt:latest
+    restart: always
+    tty: true
+    stop_signal: SIGINT
+    environment:
+      - TZ=Europe/Paris
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    volumes:
+      - /docker/zwavejs2mqtt/store:/usr/src/app/store
+    ports:
+      - 8091:8091 # port for web interface
+      - 3010:3000 # port for zwave-js websocket server
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    restart: unless-stopped
+    image: koenkk/zigbee2mqtt:latest
+    volumes:
+      - /docker/zigbee2mqtt/data:/app/data
+      - /run/udev:/run/udev:ro
+    ports:
+      - 8085:8080
+    environment:
+      - TZ=Europe/Paris
+    devices:
+      - /dev/ttyUSB1:/dev/ttyUSB1
+
+  homebridge:
+    image: oznu/homebridge:latest
+    container_name: homebridge
+    restart: always
+    network_mode: host
+    environment:
+      - PGID=1000
+      - PUID=1000
+      - HOMEBRIDGE_CONFIG_UI=1
+      - HOMEBRIDGE_CONFIG_UI_PORT=8581
+      - PACKAGES=ffmpeg.ffmpeg-libs
+      - TZ=Europe/Paris
+    volumes:
+      - /docker/homebridge:/homebridge
+    depends_on:
+      - homeassistant
+
+  home-panel:
+    image: timmo001/home-panel:latest
+    container_name: home-panel
+    restart: unless-stopped
+    ports:
+      - 8234:8234
+    volumes:
+      - /docker/home-panel:/data
+    depends_on:
+      - homeassistant
+
+  frigate:
+    container_name: frigate
+    privileged: true # this may not be necessary for all setups
+    restart: unless-stopped
+    image: blakeblackshear/frigate:stable-amd64
+    shm_size: "64mb" # update for your cameras based on calculation above
+    # (width * height * 1.5 * 9 + 270480)/1048576 = <shm size in mb>
+    devices:
+      #- /dev/bus/usb:/dev/bus/usb # passes the USB Coral, needs to be modified for other versions
+      #- /dev/apex_0:/dev/apex_0 # passes a PCIe Coral, follow driver instructions here https://coral.ai/docs/m2/get-started/#2a-on-linux
+      - /dev/dri/renderD128 # for intel hwaccel, needs to be updated for your hardware
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /docker/frigate/conf/config.yml:/config/config.yml:ro
+      - /docker/frigate/data:/media/frigate
+      - /docker/frigate/db/:/db
+      # Edit config.yml and append the following lines
+      #   database:
+      #     path: /db/frigate.db
+      - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "8087:5000"
+      - "1935:1935" # RTMP feeds
+    #environment:
+    #  FRIGATE_RTSP_PASSWORD: "password"
+    mem_limit: 4096m
+    depends_on:
+      - mosquitto
+
+  deepstack:
+    container_name: deepstack
+    image: deepquestai/deepstack:latest
+    restart: unless-stopped
+    environment:
+      - VISION-FACE=True
+    volumes:
+      - /docker/deepstack/data:/datastore
+    ports:
+      - 8089:5000
+
+  double-take:
+    container_name: double-take
+    image: jakowenko/double-take:latest
+    restart: unless-stopped
+    volumes:
+      - /docker/double-take/data:/.storage
+    ports:
+      - 8082:3000
+    depends_on:
+      - mosquitto
+      - frigate
+      - deepstack
