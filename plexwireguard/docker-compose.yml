@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  wireguard:
+    image: weejewel/wg-easy:latest
+    container_name: wireguard
+    volumes:
+      - /docker/wireguard/conf:/etc/wireguard
+    ports:
+      - "51820:51820/udp"
+      - "51821:51821/tcp"
+    environment:
+      - WG_HOST=your.dynamic.dns.org
+      - PASSWORD=admin
+      - WG_PORT=51820
+      - WG_DEFAULT_ADDRESS=10.11.12.x  # the final x is default needed notation
+      - WG_DEFAULT_DNS=8.8.8.8
+      - WG_MTU=1420
+      - WG_ALLOWED_IPS=0.0.0.0/0
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
