@@ -12,7 +12,7 @@ services:
       - WG_HOST=your.dynamic.dns.org
       - PASSWORD=admin
       - WG_PORT=51820
-      - WG_DEFAULT_ADDRESS=10.11.12.x  # the final x is default needed notation
+      - WG_DEFAULT_ADDRESS=10.13.13.x  # the final x is default needed notation
       - WG_DEFAULT_DNS=8.8.8.8
       - WG_MTU=1420
       - WG_ALLOWED_IPS=0.0.0.0/0
