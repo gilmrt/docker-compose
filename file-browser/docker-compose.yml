@@ -1,0 +1,19 @@
+version: '3.8'
+networks:
+  default: 
+    name: NAME
+    external: true
+services:
+  filebrowser:
+    container_name: filebrowser
+    image: filebrowser/filebrowser:latest
+    volumes:
+      - /docker/filebrowser/documents:/srv  # Arborescence qui sera visible de l'utilisateur par défaut
+      - /docker/filebrowser/db/filebrowser.db:/database.db
+      - ANY_OTHER_VOLUMES_TO_SHOW
+#      - ./conf/filebrowser.json:/filebrowser.json  # Fichier de configuration pour personnaliser certaines options
+    labels:
+      - com.centurylinklabs.watchtower.enable=true  # Permet de mettre à jour automatiquement le conteneur avec Watchtower
+    ports:
+      - 8084:80  # Port pour accéder à l'interface web de File Browser
+    restart: unless-stopped
